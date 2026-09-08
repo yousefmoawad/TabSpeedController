@@ -57,7 +57,7 @@ async function monitorTab(tabId) {
 
 function percentToKilobytes(percent) {
   // An exponential scale keeps low values genuinely slow while still allowing
-  // manual caps up to 50 MB/s: 1% = 8 KB/s and 99% = 50 MB/s.
+  // manual caps up to 50 MB/s: 1% = 8 KB/s and 99% = 50 MB/s. 
   return Math.round(8 * Math.pow(51200 / 8, (percent - 1) / 98));
 }
 

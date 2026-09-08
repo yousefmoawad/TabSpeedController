@@ -11,7 +11,7 @@ let isRefreshing = false;
 let editingTabId = null;
 
 function sendMessage(payload) {
-  return new Promise((resolve) => {
+  return new Promise((resolve) => { 
     chrome.runtime.sendMessage(payload, (response) => {
       const error = chrome.runtime.lastError;
       resolve(error ? { ok: false, error: error.message } : response);
