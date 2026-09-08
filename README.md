@@ -98,6 +98,3 @@ popup.html      Extension popup interface and styling
 popup.js        Popup behavior and interaction logic
 ```
 
-## Version
-
-`v1.1.0`
