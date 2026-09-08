@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab Speed Controller</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    html { overflow: hidden; scrollbar-width: none; border-radius: 16px; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar, #tabs::-webkit-scrollbar { display: none; width: 0; height: 0; border-radius: 16px; }
+    body { position: relative; width: 396px; max-height: 590px; margin: 0; padding: 17px; overflow: hidden; color: #20283a; background: #f5f7fb; }
+    body::before { content: ""; position: fixed; z-index: 10; inset: 0; border: 1px solid #d9e0eb; pointer-events: none; }
+    button, input, select { font: inherit; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 1px 0 16px; }
+    .brand { display: flex; align-items: center; min-width: 0; gap: 10px; }
+    .brand-mark { width: 34px; height: 34px; flex: none; }
+    h1 { margin: 0; color: #1d2738; font-size: 16px; letter-spacing: -.02em; }
+    .subtitle { display: flex; align-items: center; gap: 5px; margin: 3px 0 0; color: #5f6c82; font-size: 11px; }
+    .theme-toggle { display: inline-flex; align-items: center; gap: 6px; flex: none; border: 1px solid #dce2ec; border-radius: 9px; padding: 7px 9px; color: #546177; background: #fff; cursor: pointer; font-size: 11px; font-weight: 700; }
+    .theme-toggle:hover { border-color: #bac6da; background: #f9fafe; }
+    .theme-icon { width: 14px; text-align: center; font-size: 14px; }
+    #tabs { max-height: 454px; overflow-y: auto; padding: 1px 4px 2px 1px; scrollbar-color: #b8c3d5 transparent; scrollbar-width: thin; }
+    #tabs::-webkit-scrollbar { display: block; width: 6px; }
+    #tabs::-webkit-scrollbar-track { background: transparent; }
+    #tabs::-webkit-scrollbar-thumb { border: 1px solid transparent; border-radius: 99px; background: #b8c3d5; background-clip: padding-box; }
+    #tabs::-webkit-scrollbar-thumb:hover { background: #91a0b8; background-clip: padding-box; }
+    .tab-card { margin-bottom: 10px; padding: 13px; border: 1px solid #e0e5ee; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgb(27 40 65 / 3%), 0 4px 11px rgb(27 40 65 / 3%); }
+    .tab-card:hover { border-color: #c8d3e5; box-shadow: 0 5px 14px rgb(27 40 65 / 6%); }
+    .tab-card.unavailable { opacity: .65; }
+    .tab-top, .speed-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .tab-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #2a3447; font-size: 12px; font-weight: 760; }
+    .rate { display: inline-flex; align-items: center; flex: none; color: #178153; font-size: 10px; font-weight: 780; white-space: nowrap; }
+    .rate::before { content: "↓"; margin-right: 3px; font-size: 12px; line-height: 1; }
+    .tab-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 4px 0 10px; color: #66738a; font-size: 10px; }
+    .total { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 13px; color: #52617a; font-size: 10px; }
+    .total-value { color: #384963; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .speed-label { color: #58667e; font-size: 11px; font-weight: 650; }
+    .speed-value { color: #31a394; font-size: 11px; font-weight: 800; }
+    .slider-row { display: grid; grid-template-columns: 1fr 94px; align-items: center; gap: 12px; margin-top: 10px; }
+    input[type="range"] { --progress: 100%; width: 100%; height: 5px; margin: 0; appearance: none; border-radius: 99px; outline: none; cursor: pointer; background: linear-gradient(to right, #356bdd var(--progress), #dbe2ee var(--progress)); }
+    input[type="range"]::-webkit-slider-thumb { width: 15px; height: 15px; appearance: none; border: 3px solid #fff; border-radius: 50%; background: #356bdd; box-shadow: 0 1px 4px rgb(26 62 130 / 30%); }
+    input[type="range"]:hover::-webkit-slider-thumb, input[type="range"]:focus-visible::-webkit-slider-thumb { transform: scale(1.13); background: #214fae; }
+    input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border: 3px solid #fff; border-radius: 50%; background: #356bdd; box-shadow: 0 1px 4px rgb(26 62 130 / 30%); }
+    input[type="range"]:disabled { cursor: not-allowed; opacity: .5; }
+    .number-control { display: flex; align-items: center; border: 1px solid #dbe2ed; border-radius: 8px; overflow: hidden; background: #fff; }
+    .number-control:focus-within { border-color: #5984df; box-shadow: 0 0 0 3px rgb(75 119 214 / 12%); }
+    .number-control input { width: 64px; padding: 6px 2px 6px 7px; border: 0; outline: 0; color: #2d3d59; background: transparent; font-size: 11px; font-weight: 750; text-align: right; }
+    .number-control select { padding: 6px 6px 6px 2px; border: 0; outline: 0; color: #8a95a8; background: transparent; font-size: 9px; font-weight: 700; cursor: pointer; }
+    .limit { margin-top: 8px; color: #65728a; font-size: 10px; }
+    .tab-error { margin-top: 9px; color: #bd4545; font-size: 10px; }
+    .empty { padding: 38px 18px; color: #758097; font-size: 12px; text-align: center; }
+    .browser-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 2px 0; padding: 10px 12px; border: 1px solid #dce3ee; border-radius: 9px; color: #667389; background: #eef2f8; font-size: 10px; font-weight: 650; }
+    .browser-total strong { color: #2e61ce; font-size: 12px; font-weight: 800; }
+    #message { min-height: 15px; margin: 9px 2px 0; color: #748096; font-size: 10px; line-height: 1.4; }
+    #message.error { color: #ae3c3c; }
+    .privacy { margin: 10px 2px 0; color: #66738a; font-size: 10px; line-height: 1.4; }
+    body[data-theme="light"] { color-scheme: light; }
+    body[data-theme="light"] .number-control select, body[data-theme="light"] .number-control select option { background: #fff; }
+    body[data-theme="dark"]::before { border-color: #303b4e; }
+    body[data-theme="dark"] { color-scheme: dark; color: #e4e9f3; background: #151a24; }
+    body[data-theme="dark"] h1, body[data-theme="dark"] .tab-title { color: #f4f7fc; }
+    body[data-theme="dark"] .subtitle, body[data-theme="dark"] #message { color: #aeb9cb; }
+    body[data-theme="dark"] .theme-toggle, body[data-theme="dark"] .number-control { border-color: #3c4960; background: #222b3a; }
+    body[data-theme="dark"] .theme-toggle { color: #e5ebf5; }
+    body[data-theme="dark"] .theme-toggle:hover { border-color: #647493; background: #2b374a; }
+    body[data-theme="dark"] .tab-card { border-color: #344157; background: #202a39; box-shadow: 0 2px 8px rgb(0 0 0 / 16%); }
+    body[data-theme="dark"] .tab-card:hover { border-color: #526481; box-shadow: 0 6px 16px rgb(0 0 0 / 24%); }
+    body[data-theme="dark"] .tab-url, body[data-theme="dark"] .limit, body[data-theme="dark"] .privacy { color: #94a1b5; }
+    body[data-theme="dark"] .total, body[data-theme="dark"] .speed-label { color: #c0cbd9; }
+    body[data-theme="dark"] .total-value { color: #e8eef8; }
+    body[data-theme="dark"] .browser-total { border-color: #3c4960; color: #c0cbd9; background: #222b3a; }
+    body[data-theme="dark"] .browser-total strong { color: #a9c1ff; }
+    body[data-theme="dark"] .speed-value { color: #a9c1ff; }
+    body[data-theme="dark"] .rate { color: #72dda7; }
+    body[data-theme="dark"] input[type="range"] { background: linear-gradient(to right, #759cff var(--progress), #3d4b61 var(--progress)); }
+    body[data-theme="dark"] input[type="range"]::-webkit-slider-thumb { border-color: #202a39; background: #a5bdff; }
+    body[data-theme="dark"] .number-control input, body[data-theme="dark"] .number-control select { color: #edf2fa; }
+    body[data-theme="dark"] .number-control select option { color: #edf2fa; background: #222b3a; }
+    body[data-theme="dark"] #tabs { scrollbar-color: #53637c transparent; }
+    body[data-theme="dark"] #tabs::-webkit-scrollbar-thumb { background: #53637c; background-clip: padding-box; }
+    body[data-theme="dark"] #tabs::-webkit-scrollbar-thumb:hover { background: #7185a5; background-clip: padding-box; }
+    body[data-theme="dark"] #message.error { color: #ff9e9e; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img class="brand-mark" src="speed.png" alt="">
+      <div>
+        <h1>Tab Speed Controller</h1>
+      </div>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Change color theme"><span class="theme-icon">◐</span><span>Dark</span></button>
+  </header>
+
+  <main id="tabs" aria-live="polite">
+    <div class="empty">Finding open tabs…</div>
+  </main>
+  <div id="browser-total" class="browser-total" aria-live="polite"><span>Total browser usage</span><strong>0 KB</strong></div>
+  <div id="message" role="status"></div>
+      <p class="privacy">Drag the speed bar, or enter a value and choose between %, KB/s, or MB/s.</p>
+  <script src="popup.js"></script>
+</body>
+</html>
